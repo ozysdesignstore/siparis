@@ -48,8 +48,22 @@
       return;
     }
 
+    // Safari gömülü uygulamanın hafızasını sildiği için PIN bu sayfada saklanır
+    var kayitliPin = '';
+    try { kayitliPin = localStorage.getItem('sp_pin') || ''; } catch (e) {}
+    var adres = WEB_APP_URL + (WEB_APP_URL.indexOf('?') === -1 ? '?' : '&') + 'o=' + encodeURIComponent(location.origin)
+      + (kayitliPin ? '&pin=' + encodeURIComponent(kayitliPin) : '');
+    window.addEventListener('message', function (ev) {
+      if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/.test(ev.origin)) return;
+      var d = ev.data || {};
+      try {
+        if (d.tip === 'sp_pin' && /^\d{1,12}$/.test(String(d.pin))) localStorage.setItem('sp_pin', String(d.pin));
+        if (d.tip === 'sp_cikis') localStorage.removeItem('sp_pin');
+      } catch (e) {}
+    });
+
     var iframe = document.createElement('iframe');
-    iframe.src = WEB_APP_URL;
+    iframe.src = adres;
     iframe.title = 'Sipariş Takip';
     iframe.setAttribute('allow', 'clipboard-write');
     kap.appendChild(iframe);
